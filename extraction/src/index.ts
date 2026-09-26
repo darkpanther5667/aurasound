@@ -13,18 +13,8 @@ const HOST = process.env.HOST || '0.0.0.0';
 app.use(helmet());
 app.use(express.json());
 
-// Strict Internal Gateway Only: Disallow public browsers & external CORS
+// Strict Internal Gateway Only: Disallow direct public browser access
 app.use((req: Request, res: Response<ApiResponse>, next: NextFunction) => {
-  // Check client IP is loopback
-  const remoteIp = req.socket.remoteAddress || '';
-  const isLoopback =
-    remoteIp === '127.0.0.1' ||
-    remoteIp === '::1' ||
-    remoteIp === '::ffff:127.0.0.1' ||
-    remoteIp.startsWith('10.') ||
-    remoteIp.startsWith('172.') ||
-    remoteIp.startsWith('192.168.');
-
   // If a browser tries direct cross-origin access with Origin header, block it
   const origin = req.headers.origin;
   if (origin && !origin.includes('localhost') && !origin.includes('127.0.0.1')) {
@@ -35,12 +25,23 @@ app.use((req: Request, res: Response<ApiResponse>, next: NextFunction) => {
     return;
   }
 
-  if (!isLoopback && process.env.NODE_ENV === 'production') {
-    res.status(403).json({
-      success: false,
-      error: 'Internal service access restricted to private network.'
-    });
-    return;
+  if (process.env.STRICT_IP_CHECK === 'true') {
+    const remoteIp = req.socket.remoteAddress || '';
+    const isLoopback =
+      remoteIp === '127.0.0.1' ||
+      remoteIp === '::1' ||
+      remoteIp === '::ffff:127.0.0.1' ||
+      remoteIp.startsWith('10.') ||
+      remoteIp.startsWith('172.') ||
+      remoteIp.startsWith('192.168.');
+
+    if (!isLoopback) {
+      res.status(403).json({
+        success: false,
+        error: 'Internal service access restricted to private network.'
+      });
+      return;
+    }
   }
 
   next();
