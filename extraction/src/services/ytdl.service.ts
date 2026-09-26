@@ -4,20 +4,23 @@ import { ResolvedAudioStream, SearchResultItem } from '../types/index.js';
 
 const execFileAsync = promisify(execFile);
 
-// Resolve yt-dlp path: env override → HOME/.local/bin (Render install) → system PATH
-function resolveYtDlpPath(): string {
+// Resolve yt-dlp path: env override → absolute HOME path → /usr/local/bin → system PATH
+function getYtDlpPath(): string {
   if (process.env.YT_DLP_PATH) return process.env.YT_DLP_PATH;
-  const homeBin = `${process.env.HOME || '/root'}/.local/bin/yt-dlp`;
-  try {
-    const { execFileSync } = require('child_process');
-    execFileSync(homeBin, ['--version'], { timeout: 3000 });
-    return homeBin;
-  } catch {
-    return 'yt-dlp'; // fallback to system PATH
+  // Absolute paths to check — no PATH dependency
+  const candidates = [
+    `${process.env.HOME || '/root'}/.local/bin/yt-dlp`,
+    '/usr/local/bin/yt-dlp',
+    '/usr/bin/yt-dlp',
+    'yt-dlp'
+  ];
+  const { existsSync } = require('fs');
+  for (const p of candidates) {
+    if (p === 'yt-dlp') return p; // fallback to PATH
+    if (existsSync(p)) return p;
   }
+  return 'yt-dlp';
 }
-
-const YT_DLP_PATH = resolveYtDlpPath();
 
 // Maximum allowed duration for regular music track searches (15 minutes).
 // Excludes full DJ sets, live sessions, podcasts, and long mixes.
@@ -49,7 +52,7 @@ export class YtdlService {
     ];
 
     try {
-      const { stdout } = await execFileAsync(YT_DLP_PATH, args, {
+      const { stdout } = await execFileAsync(getYtDlpPath(), args, {
         timeout: 25000,
         maxBuffer: 10 * 1024 * 1024
       });
@@ -108,7 +111,7 @@ export class YtdlService {
     ];
 
     try {
-      const { stdout } = await execFileAsync(YT_DLP_PATH, args, {
+      const { stdout } = await execFileAsync(getYtDlpPath(), args, {
         timeout: 20000,
         maxBuffer: 10 * 1024 * 1024
       });
@@ -153,7 +156,7 @@ export class YtdlService {
    */
   public async getVersion(): Promise<string> {
     try {
-      const { stdout } = await execFileAsync(YT_DLP_PATH, ['--version']);
+      const { stdout } = await execFileAsync(getYtDlpPath(), ['--version']);
       return stdout.trim();
     } catch {
       return 'unknown';
