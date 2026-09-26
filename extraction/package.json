@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && npm run install-ytdlp",
+    "install-ytdlp": "curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod +x /usr/local/bin/yt-dlp && yt-dlp --version || echo 'yt-dlp install skipped (no root access)'",
     "start": "node dist/index.js"
   },
   "dependencies": {
