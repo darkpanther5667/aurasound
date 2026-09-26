@@ -1,0 +1,104 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TrackSource {
+  audius
+  youtube
+}
+
+enum EventType {
+  play
+  skip
+  complete
+  like
+  unlike
+  search
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  password_hash String
+  phone         String?      @default("")
+  display_name  String?      @default("Aura Resident")
+  avatar_url    String?      @default("")
+  bio           String?      @default("Music lover & sonic explorer")
+  settings      Json         @default("{}")
+  created_at    DateTime     @default(now())
+
+  // Relations
+  favorites     Favorite[]
+  queue_items   QueueItem[]
+  events        Event[]
+
+  @@map("users")
+}
+
+model Track {
+  id               String       @id @default(uuid())
+  source           TrackSource
+  external_id      String
+  title            String
+  artist           String
+  cover_url        String
+  duration_seconds Int
+
+  // Relations
+  favorites        Favorite[]
+  queue_items      QueueItem[]
+  events           Event[]
+
+  @@unique([source, external_id])
+  @@map("tracks")
+}
+
+model Event {
+  id         String     @id @default(uuid())
+  user_id    String
+  track_id   String?
+  event_type EventType
+  created_at DateTime   @default(now())
+  context    Json       @default("{}")
+
+  // Relations
+  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  track      Track?     @relation(fields: [track_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([event_type])
+  @@map("events")
+}
+
+model Favorite {
+  user_id    String
+  track_id   String
+  created_at DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [track_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, track_id])
+  @@map("favorites")
+}
+
+model QueueItem {
+  id         String   @id @default(uuid())
+  user_id    String
+  track_id   String
+  position   Int
+  added_at   DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [track_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, position])
+  @@map("queue_items")
+}

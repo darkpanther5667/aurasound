@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Production build outputs
+dist
+dist-ssr
+*.local
+
+# Environment variables
+.env
+.env*.local
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor & OS files
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea
+.vscode
+*.sublime-workspace
+
+# Prisma SQLite / local dev DBs (if any)
+*.db
+*.db-journal
