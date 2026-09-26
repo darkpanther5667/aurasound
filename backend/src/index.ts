@@ -23,13 +23,14 @@ app.use(helmet());
 
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
-  .map((o) => o.trim());
+  .map((o) => o.trim().replace(/\/$/, '')); // strip trailing slashes
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, postman)
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      const normalizedOrigin = origin?.replace(/\/$/, ''); // strip trailing slash from incoming origin
+      // Allow requests with no origin (mobile apps, curl, postman) or wildcard
+      if (!normalizedOrigin || allowedOrigins.includes('*') || allowedOrigins.includes(normalizedOrigin)) {
         callback(null, true);
       } else {
         callback(new Error('Cross-Origin Request Blocked by AuraSound Gateway CORS'));
