@@ -3,7 +3,21 @@ import { promisify } from 'util';
 import { ResolvedAudioStream, SearchResultItem } from '../types/index.js';
 
 const execFileAsync = promisify(execFile);
-const YT_DLP_PATH = process.env.YT_DLP_PATH || 'yt-dlp';
+
+// Resolve yt-dlp path: env override → HOME/.local/bin (Render install) → system PATH
+function resolveYtDlpPath(): string {
+  if (process.env.YT_DLP_PATH) return process.env.YT_DLP_PATH;
+  const homeBin = `${process.env.HOME || '/root'}/.local/bin/yt-dlp`;
+  try {
+    const { execFileSync } = require('child_process');
+    execFileSync(homeBin, ['--version'], { timeout: 3000 });
+    return homeBin;
+  } catch {
+    return 'yt-dlp'; // fallback to system PATH
+  }
+}
+
+const YT_DLP_PATH = resolveYtDlpPath();
 
 // Maximum allowed duration for regular music track searches (15 minutes).
 // Excludes full DJ sets, live sessions, podcasts, and long mixes.

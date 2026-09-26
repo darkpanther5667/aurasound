@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && npm run install-ytdlp",
-    "install-ytdlp": "curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod +x /usr/local/bin/yt-dlp && yt-dlp --version || echo 'yt-dlp install skipped (no root access)'",
-    "start": "node dist/index.js"
+    "install-ytdlp": "mkdir -p $HOME/.local/bin && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o $HOME/.local/bin/yt-dlp && chmod +x $HOME/.local/bin/yt-dlp && echo 'yt-dlp installed:' && $HOME/.local/bin/yt-dlp --version",
+    "start": "export PATH=$HOME/.local/bin:$PATH && node dist/index.js"
   },
   "dependencies": {
     "@types/express": "^4.17.21",
