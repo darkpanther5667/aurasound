@@ -115,8 +115,8 @@ export class YtdlService {
    * and long-form content (> MAX_TRACK_DURATION_SECONDS, e.g. DJ sets, live streams)
    */
   public async search(query: string, limit = 10): Promise<SearchResultItem[]> {
-    // Request extra items to ensure limit is met after filtering out channels, 0-duration videos, and long sets
-    const fetchLimit = Math.max(limit * 3, 20);
+    // Fetch only slight surplus to stay fast (2-3s instead of 12-15s)
+    const fetchLimit = Math.min(Math.max(limit + 4, 8), 15);
     const args = [
       '--no-playlist',
       '--flat-playlist',

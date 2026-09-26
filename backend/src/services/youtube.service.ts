@@ -48,7 +48,7 @@ export class YouTubeExtractionService {
   public async search(query: string, limit = 10): Promise<YouTubeSearchResult[]> {
     try {
       const url = `${this.baseUrl}/search?q=${encodeURIComponent(query)}&limit=${limit}`;
-      const response = await axios.get(url, { timeout: 15000 });
+      const response = await axios.get(url, { timeout: 20000 });
 
       if (response.data && response.data.success && Array.isArray(response.data.data)) {
         // Enforce strict 11-char ID and positive duration filter
@@ -63,7 +63,7 @@ export class YouTubeExtractionService {
       return [];
     } catch (err: any) {
       console.warn(
-        `[YouTube Service] Extraction microservice search failed (${err.code || err.message}). Gracefully degrading.`
+        `[YouTube Service] Extraction search failed for "${query}" via ${this.baseUrl} (${err.code || err.message}). Gracefully degrading.`
       );
       return [];
     }
