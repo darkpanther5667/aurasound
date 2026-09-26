@@ -33,7 +33,11 @@ export class ExtractionClientError extends Error {
 
 export class YouTubeExtractionService {
   private get baseUrl(): string {
-    return (process.env.EXTRACTION_SERVICE_URL || 'https://aurasound-extraction.onrender.com').replace(/\/$/, '');
+    const envUrl = process.env.EXTRACTION_SERVICE_URL;
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1') && !envUrl.includes(':4001')) {
+      return envUrl.replace(/\/$/, '');
+    }
+    return 'https://aurasound-extraction.onrender.com';
   }
 
   /**

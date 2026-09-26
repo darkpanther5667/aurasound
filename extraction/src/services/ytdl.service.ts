@@ -60,6 +60,9 @@ export class YtdlService {
       'bestaudio/best',
       '--dump-single-json',
       '--no-warnings',
+      '--geo-bypass',
+      '--extractor-args',
+      'youtube:player_client=android,ios,web',
       videoUrl
     ];
 
