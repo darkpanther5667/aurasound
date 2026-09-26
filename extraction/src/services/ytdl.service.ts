@@ -1,23 +1,35 @@
+import fs from 'fs';
+import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { ResolvedAudioStream, SearchResultItem } from '../types/index.js';
 
 const execFileAsync = promisify(execFile);
 
-// Resolve yt-dlp path: env override → absolute HOME path → /usr/local/bin → system PATH
+// Resolve yt-dlp path: env override → local project bin → absolute HOME path → /usr/local/bin → system PATH
 function getYtDlpPath(): string {
   if (process.env.YT_DLP_PATH) return process.env.YT_DLP_PATH;
-  // Absolute paths to check — no PATH dependency
+
   const candidates = [
+    path.resolve(__dirname, '../../bin/yt-dlp'),
+    path.resolve(process.cwd(), 'bin/yt-dlp'),
+    path.resolve(process.cwd(), 'extraction/bin/yt-dlp'),
     `${process.env.HOME || '/root'}/.local/bin/yt-dlp`,
     '/usr/local/bin/yt-dlp',
     '/usr/bin/yt-dlp',
     'yt-dlp'
   ];
-  const { existsSync } = require('fs');
+
   for (const p of candidates) {
-    if (p === 'yt-dlp') return p; // fallback to PATH
-    if (existsSync(p)) return p;
+    if (p === 'yt-dlp') return p;
+    try {
+      if (fs.existsSync(p)) {
+        try {
+          fs.chmodSync(p, 0o755);
+        } catch {}
+        return p;
+      }
+    } catch {}
   }
   return 'yt-dlp';
 }
@@ -155,11 +167,12 @@ export class YtdlService {
    * Health and version telemetry check
    */
   public async getVersion(): Promise<string> {
+    const p = getYtDlpPath();
     try {
-      const { stdout } = await execFileAsync(getYtDlpPath(), ['--version']);
-      return stdout.trim();
-    } catch {
-      return 'unknown';
+      const { stdout } = await execFileAsync(p, ['--version']);
+      return `${stdout.trim()} (${p})`;
+    } catch (err: any) {
+      return `unknown (${p}: ${err.message || String(err)})`;
     }
   }
 

@@ -59,14 +59,15 @@ export const SearchResultsView: React.FC = () => {
       list = list.filter((t) => (t.duration || 0) >= 180); // >= 3 mins
     }
 
-    // 3. Genre filter (if active)
+    // 3. Genre filter (only filter out tracks if they have a non-matching genre)
     if (
+      selectedGenre &&
       selectedGenre !== 'ALL VIBES' &&
       selectedGenre !== 'ALL WORKSTATIONS' &&
       selectedGenre !== 'All Vibes'
     ) {
       list = list.filter(
-        (t) => t.genre?.toLowerCase() === selectedGenre.toLowerCase()
+        (t) => !t.genre || t.genre.toLowerCase() === selectedGenre.toLowerCase()
       );
     }
 

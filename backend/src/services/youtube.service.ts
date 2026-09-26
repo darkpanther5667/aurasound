@@ -44,7 +44,7 @@ export class YouTubeExtractionService {
   public async search(query: string, limit = 10): Promise<YouTubeSearchResult[]> {
     try {
       const url = `${this.baseUrl}/search?q=${encodeURIComponent(query)}&limit=${limit}`;
-      const response = await axios.get(url, { timeout: 7000 });
+      const response = await axios.get(url, { timeout: 15000 });
 
       if (response.data && response.data.success && Array.isArray(response.data.data)) {
         // Enforce strict 11-char ID and positive duration filter
