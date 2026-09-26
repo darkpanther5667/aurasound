@@ -35,7 +35,6 @@ class AudioEngine {
     if (typeof window === 'undefined') return;
 
     this.audioEl = new Audio();
-    this.audioEl.crossOrigin = 'anonymous';
     this.audioEl.preload = 'auto';
 
     this.audioEl.addEventListener('timeupdate', () => {
@@ -62,6 +61,17 @@ class AudioEngine {
 
     this.audioEl.addEventListener('error', (e) => {
       console.warn('Audio stream error on media element:', e);
+      if (this.audioEl && this.audioEl.hasAttribute('crossOrigin')) {
+        console.warn('Recovering from media error by stripping crossOrigin attribute');
+        const currentSrc = this.audioEl.src;
+        this.audioEl.removeAttribute('crossOrigin');
+        this.audioEl.src = currentSrc;
+        this.audioEl.load();
+        this.audioEl.play().catch(() => {
+          this.startSynthesizedPlayback();
+        });
+        return;
+      }
       if (this.onPlayStateChangeCallback) this.onPlayStateChangeCallback(false);
     });
   }
@@ -186,8 +196,20 @@ class AudioEngine {
 
     if (!this.audioEl) return;
 
+    const isInternalOrCors =
+      track.audioUrl.startsWith('/') ||
+      track.audioUrl.includes('onrender.com') ||
+      track.audioUrl.includes('localhost') ||
+      track.audioUrl.includes('127.0.0.1') ||
+      track.audioUrl.includes('audius');
+
     try {
-      this.audioEl.crossOrigin = 'anonymous';
+      if (isInternalOrCors) {
+        this.audioEl.crossOrigin = 'anonymous';
+      } else {
+        this.audioEl.removeAttribute('crossOrigin');
+      }
+
       this.audioEl.src = track.audioUrl;
       this.audioEl.currentTime = startTime;
 
@@ -197,7 +219,20 @@ class AudioEngine {
       }
       if (this.onPlayStateChangeCallback) this.onPlayStateChangeCallback(true);
     } catch (err) {
-      console.warn('Direct media play error:', err);
+      console.warn('Direct media play error with crossOrigin, retrying direct element play:', err);
+      try {
+        this.audioEl.removeAttribute('crossOrigin');
+        this.audioEl.src = track.audioUrl;
+        this.audioEl.currentTime = startTime;
+        const retryPromise = this.audioEl.play();
+        if (retryPromise !== undefined) {
+          await retryPromise;
+        }
+        if (this.onPlayStateChangeCallback) this.onPlayStateChangeCallback(true);
+      } catch (err2) {
+        console.warn('Direct media playback failed, activating procedural audio synth:', err2);
+        this.startSynthesizedPlayback(track);
+      }
     }
   }
 
