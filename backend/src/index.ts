@@ -71,6 +71,28 @@ app.use('/profile', profileRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/account', accountRoutes);
 
+// Root Welcome Route
+app.get('/', (_req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      service: '🌌 AuraSound Gateway API',
+      version: '1.0.0',
+      status: 'operational',
+      description: 'Open-source spatial audio streaming platform curated for India',
+      github: 'https://github.com/darkpanther5667/aurasound',
+      endpoints: {
+        health: 'GET /health',
+        trending: 'GET /tracks/trending',
+        search: 'GET /tracks/search?q=Arijit+Singh',
+        stream: 'GET /tracks/:id/stream',
+        favorites: 'GET /favorites',
+        queue: 'GET /queue'
+      }
+    }
+  });
+});
+
 // 404 Route Handler
 app.use((_req: Request, res: Response<ApiResponse>) => {
   res.status(404).json({
